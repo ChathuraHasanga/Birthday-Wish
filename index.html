@@ -195,6 +195,7 @@
             border-radius: 50%;
             object-fit: cover;
             background: #1e293b;
+            display: block;
         }
 
         .avatar-placeholder {
@@ -416,7 +417,7 @@
 
         <div id="outputBox" style="margin-top: 14px;" class="hidden">
             <input type="text" id="finalUrl" readonly onclick="this.select()" style="width:100%; padding:8px; background:#000; color:#4ade80; border:1px solid #334155; border-radius:6px;">
-            <p style="font-size: 0.8rem; color: #4ade80; margin-top: 6px;">Link copied to clipboard!</p>
+            <p style="font-size: 0.8rem; color: #4ade80; margin-top: 6px;">Link copied to clipboard! Uploaded images are kept in this browser; use an image URL to share across devices.</p>
         </div>
     </div>
 
@@ -460,7 +461,8 @@
         let audioContext = null;
         let melodyTimer = null;
         let melodyStep = 0;
-        let uploadedImgData = "";
+        let uploadedImgRef = "";
+        const imageStoragePrefix = "birthday-image-";
 
         const birthdayMelody = [
             ["G4", 1], ["G4", 1], ["A4", 2], ["G4", 2], ["C5", 2], ["B4", 4],
@@ -505,7 +507,16 @@
             const sender = urlParams.get('from') || "Chathura";
             const prefix = urlParams.get('prefix') || "With best wishes ✨";
             const theme = urlParams.get('theme') || "default";
-            const img = urlParams.get('img') || "";
+            const imgParam = urlParams.get('img') || "";
+            let img = imgParam;
+            if (imgParam.startsWith("storage:")) {
+                try {
+                    img = localStorage.getItem(`${imageStoragePrefix}${imgParam.slice(8)}`) || "";
+                } catch (error) {
+                    img = "";
+                    console.error("Unable to access the stored recipient image.", error);
+                }
+            }
 
             if (theme !== "default") {
                 document.documentElement.setAttribute('data-theme', theme);
@@ -521,7 +532,14 @@
 
             const avatarBox = document.getElementById('avatarBox');
             if (img) {
-                avatarBox.innerHTML = `<img src="${img}" class="avatar-img" alt="Recipient">`;
+                const image = document.createElement("img");
+                image.src = img;
+                image.className = "avatar-img";
+                image.alt = "Recipient";
+                image.onerror = () => {
+                    avatarBox.innerHTML = `<div class="avatar-placeholder">${name.charAt(0).toUpperCase()}</div>`;
+                };
+                avatarBox.replaceChildren(image);
             } else {
                 const initial = name.charAt(0).toUpperCase();
                 avatarBox.innerHTML = `<div class="avatar-placeholder">${initial}</div>`;
@@ -601,12 +619,35 @@
             }
         }
 
+        function saveUploadedImage(dataUrl, fileName) {
+            const imageKey = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+            try {
+                localStorage.setItem(`${imageStoragePrefix}${imageKey}`, dataUrl);
+                uploadedImgRef = `storage:${imageKey}`;
+                document.getElementById('dropZone').innerText = `Ready: ${fileName}`;
+            } catch (error) {
+                uploadedImgRef = "";
+                alert("This image is too large for browser storage. Please choose a smaller image or paste an image URL.");
+                console.error("Unable to store uploaded image.", error);
+            }
+        }
+
         function handleFile(file) {
-            if (!file) return;
+            if (!file || !file.type.startsWith("image/")) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                uploadedImgData = e.target.result;
-                document.getElementById('dropZone').innerText = `Loaded: ${file.name}`;
+                const source = new Image();
+                source.onload = () => {
+                    const maxSize = 480;
+                    const scale = Math.min(1, maxSize / Math.max(source.naturalWidth, source.naturalHeight));
+                    const canvas = document.createElement("canvas");
+                    canvas.width = Math.max(1, Math.round(source.naturalWidth * scale));
+                    canvas.height = Math.max(1, Math.round(source.naturalHeight * scale));
+                    canvas.getContext("2d").drawImage(source, 0, 0, canvas.width, canvas.height);
+                    saveUploadedImage(canvas.toDataURL("image/jpeg", 0.72), file.name);
+                };
+                source.onerror = () => alert("Unable to read this image. Please choose another file.");
+                source.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -623,7 +664,7 @@
             const sender = document.getElementById('cfgSender').value.trim() || "Chathura";
             const prefix = document.getElementById('cfgPrefix').value;
             const theme = document.getElementById('cfgTheme').value;
-            const imgUrl = uploadedImgData || document.getElementById('cfgImgUrl').value.trim();
+            const imgUrl = uploadedImgRef || document.getElementById('cfgImgUrl').value.trim();
 
             const baseUrl = window.location.href.split('?')[0];
             const url = new URL(baseUrl);
