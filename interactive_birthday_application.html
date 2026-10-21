@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday! 🎉</title>
+    <!-- Google Fonts & Canvas Confetti -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* Theme Variables */
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(15, 23, 42, 0.85);
+            --accent-gradient: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent-color: #ec4899;
+        }
+
+        /* Theme: Professional Navy */
+        [data-theme="pro"] {
+            --bg-color: #0b132b;
+            --card-bg: rgba(28, 37, 65, 0.9);
+            --accent-gradient: linear-gradient(135deg, #00b4d8 0%, #0077b6 50%, #03045e 100%);
+            --text-main: #ffffff;
+            --text-sub: #90e0ef;
+            --accent-color: #00b4d8;
+        }
+
+        /* Theme: Romantic Pink */
+        [data-theme="romantic"] {
+            --bg-color: #2b0914;
+            --card-bg: rgba(45, 12, 24, 0.9);
+            --accent-gradient: linear-gradient(135deg, #ff4d6d 0%, #c77dff 50%, #ff758f 100%);
+            --text-main: #fff0f3;
+            --text-sub: #ffb3c1;
+            --accent-color: #ff4d6d;
+        }
+
+        /* Theme: Birthday Blast Vibrant */
+        [data-theme="blast"] {
+            --bg-color: #12002b;
+            --card-bg: rgba(30, 0, 60, 0.85);
+            --accent-gradient: linear-gradient(135deg, #f72585 0%, #7209b7 33%, #3a0ca3 66%, #4cc9f0 100%);
+            --text-main: #ffffff;
+            --text-sub: #e0aaff;
+            --accent-color: #f72585;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.5s ease;
+        }
+
+        /* Ambient Floating Balloons */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .balloon {
+            position: absolute;
+            bottom: -100px;
+            width: 38px;
+            height: 48px;
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            opacity: 0.35;
+            animation: floatUp 12s infinite linear;
+        }
+
+        .balloon::after {
+            content: "";
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 14px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.35; }
+            90% { opacity: 0.35; }
+            100% { transform: translateY(-115vh) rotate(20deg); opacity: 0; }
+        }
+
+        /* Dynamic Glow Border Card */
+        .card-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 460px;
+            margin: 20px auto;
+            border-radius: 24px;
+            padding: 3px;
+            background: var(--accent-gradient);
+            background-size: 300% 300%;
+            animation: borderGlow 6s ease infinite;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        @keyframes borderGlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .card-inner {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 22px;
+            padding: 32px 24px;
+            text-align: center;
+        }
+
+        /* Unboxing Screen */
+        .unboxing-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-color);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        .gift-box {
+            font-size: 80px;
+            animation: pulseGift 1.5s infinite ease-in-out;
+            user-select: none;
+        }
+
+        @keyframes pulseGift {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.15) rotate(-5deg); }
+        }
+
+        .tap-hint {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: var(--text-sub);
+            letter-spacing: 1px;
+            animation: fadeInOut 2s infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Avatar Container */
+        .avatar-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px auto;
+            border-radius: 50%;
+            padding: 4px;
+            background: var(--accent-gradient);
+        }
+
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #1e293b;
+        }
+
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent-color);
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sub-title {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+        }
+
+        /* Wish Box */
+        .wish-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wish-text {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: var(--text-main);
+            transition: opacity 0.2s ease;
+        }
+
+        .btn-shuffle {
+            background: var(--accent-gradient);
+            border: none;
+            color: white;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .btn-shuffle:hover { transform: translateY(-2deg); }
+
+        .sender-tag {
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+        }
+
+        .sender-name {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        /* Audio Control Button */
+        .audio-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Admin Creator Panel */
+        .admin-panel {
+            width: 90%;
+            max-width: 480px;
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid #334155;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            z-index: 200;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed #475569;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-bg" id="ambientBg"></div>
+
+    <button class="audio-btn" id="audioToggle" onclick="toggleAudio()" title="Toggle Sound" aria-label="Toggle Sound">🎵</button>
+
+    <!-- Unboxing Screen -->
+    <div class="unboxing-overlay" id="unboxingOverlay" onclick="openGift()">
+        <div class="gift-box">🎁</div>
+        <div class="tap-hint">Tap to Open Your Wish ✨</div>
+    </div>
+
+    <!-- Main Card View -->
+    <div class="card-wrapper hidden" id="cardWrapper">
+        <div class="card-inner">
+            <div class="avatar-container" id="avatarBox"></div>
+
+            <h1 id="recipientDisplay">Happy Birthday!</h1>
+            <p class="sub-title">Wishing you an extraordinary day full of joy!</p>
+
+            <div class="wish-container">
+                <p class="wish-text" id="wishText">Loading wish...</p>
+            </div>
+
+            <button class="btn-shuffle" onclick="shuffleWish()">Show Another Wish 🎲</button>
+
+            <div class="sender-tag" id="senderBox">
+                <span id="prefixDisplay">With best wishes ✨</span> From: <span class="sender-name" id="senderDisplay">Someone Special</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secret Admin Creator Studio (?mode=create) -->
+    <div class="admin-panel hidden" id="adminStudio">
+        <h2 style="margin-bottom: 16px; font-size: 1.2rem; color: #ec4899;">🔒 Admin Creator Studio</h2>
+        
+        <div class="form-group">
+            <label>Recipient Name:</label>
+            <input type="text" id="cfgName" placeholder="e.g. Kasun or Nimali">
+        </div>
+
+        <div class="form-group">
+            <label>Sender Name:</label>
+            <input type="text" id="cfgSender" placeholder="e.g. Chathura">
+        </div>
+
+        <div class="form-group">
+            <label>Footer Message Style:</label>
+            <select id="cfgPrefix">
+                <option value="With best wishes ✨">With best wishes ✨ (General / Friends)</option>
+                <option value="With lots of love ❤️">With lots of love ❤️ (Close Friends / Girlfriend)</option>
+                <option value="Warm regards 🌟">Warm regards 🌟 (Tech Lead / Professional)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Card Theme Style:</label>
+            <select id="cfgTheme">
+                <option value="default">Classic Glass (Universal Glow)</option>
+                <option value="pro">Professional Navy (Tech Leads / Boss)</option>
+                <option value="romantic">Romantic Pink (Girlfriend / Special)</option>
+                <option value="blast">Birthday Blast (Best Friends / Festive)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Recipient Photo (Upload / Drag & Drop / Ctrl+V):</label>
+            <div class="drop-zone" id="dropZone" onclick="document.getElementById('cfgFile').click()">
+                Click to upload, Drag & Drop, or Ctrl+V
+            </div>
+            <input type="file" id="cfgFile" accept="image/*" class="hidden" onchange="handleFile(this.files[0])">
+            <input type="text" id="cfgImgUrl" placeholder="Or paste image web URL" style="margin-top: 6px;">
+        </div>
+
+        <button class="btn-shuffle" style="width: 100%; border-radius: 10px;" onclick="generateSecureLink()">Generate Wish Link 🔗</button>
+
+        <div id="outputBox" style="margin-top: 14px;" class="hidden">
+            <input type="text" id="finalUrl" readonly onclick="this.select()" style="width:100%; padding:8px; background:#000; color:#4ade80; border:1px solid #334155; border-radius:6px;">
+            <p style="font-size: 0.8rem; color: #4ade80; margin-top: 6px;">Link copied to clipboard!</p>
+        </div>
+    </div>
+
+    <script>
+        const WISHES_POOL = [
+            "Wishing you a year filled with grand adventures, peace, and remarkable achievements! Happy Birthday! 🌟",
+            "May your future be filled with success, happiness, and countless wonderful opportunities. Happy Birthday! 🎂",
+            "May your special day bring you as much happiness as you bring to everyone around you. Have a blast!",
+            "Wishing you good health, a long life, and the fulfillment of every beautiful wish. Happy Birthday! ❤️",
+            "Cheers to another year of great memories, sound code, and boundless success! Happy Birthday!",
+            "May you have the strength and confidence to achieve every goal in life. Happy Birthday!",
+            "May this year unlock brand new opportunities and take you to greater heights. Happy Birthday! 🚀",
+            "May all your dreams come true and your birthday be filled with happiness!",
+            "Wishing a fantastic birthday to someone who inspires and motivates everyone around them!",
+            "May you always have reasons to smile and a heart full of happiness. Happy Birthday!",
+            "May your day be filled with warm smiles, sweet moments, and unforgettable memories!",
+            "Wishing you success in everything you do and a birthday filled with good health!",
+            "Wishing you good health, wisdom, and continued prosperity in the years ahead!",
+            "May the year ahead be filled with success, happiness, and unforgettable moments!",
+            "May your passion and hard work bring you all the success you deserve. Happy Birthday!",
+            "Wishing you lasting happiness, excellent health, and many wonderful years ahead!",
+            "Here's to celebrating YOU today! May your year ahead be brighter than ever. 🎉",
+            "May every good thing you wish for in life come true. Have a wonderful birthday!",
+            "Wishing you endless happiness, boundless wisdom, and true success always!",
+            "May you and your family be surrounded by happiness, love, and prosperity. Happy Birthday!",
+            "May your life be blessed with good health, joy, and peace of mind. Happy Birthday!",
+            "May your birthday create many beautiful memories that you will cherish forever!",
+            "Wishing you a memorable celebration and a wonderful year ahead!",
+            "Wishing you a lucky birthday and the courage to conquer every goal!",
+            "Cheers to celebrating your journey so far and the bright future ahead!",
+            "Sending heartfelt wishes on your special day. May your birthday be truly amazing!",
+            "May today be the start of an extraordinarily blessed year for you!",
+            "May your birthday be blessed with peace, happiness, and excellent health!",
+            "Warmest birthday greetings! Keep shining and inspiring as always. ✨",
+            "May all your good wishes come true and bring you endless joy. Happy Birthday!"
+        ];
+
+        let selectedWishes = [];
+        let currentWishIdx = 0;
+        let isAudioPlaying = false;
+        let audioContext = null;
+        let melodyTimer = null;
+        let melodyStep = 0;
+        let uploadedImgData = "";
+
+        const birthdayMelody = [
+            ["G4", 1], ["G4", 1], ["A4", 2], ["G4", 2], ["C5", 2], ["B4", 4],
+            ["G4", 1], ["G4", 1], ["A4", 2], ["G4", 2], ["D5", 2], ["C5", 4],
+            ["G4", 1], ["G4", 1], ["G5", 2], ["E5", 2], ["C5", 2], ["B4", 2], ["A4", 4],
+            ["F5", 1], ["F5", 1], ["E5", 2], ["C5", 2], ["D5", 2], ["C5", 4]
+        ];
+        const noteFrequencies = {
+            A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25,
+            F5: 698.46, G4: 392, G5: 783.99
+        };
+
+        function initBalloons() {
+            const container = document.getElementById('ambientBg');
+            const colors = ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'];
+            for (let i = 0; i < 12; i++) {
+                const b = document.createElement('div');
+                b.className = 'balloon';
+                b.style.left = `${Math.random() * 100}%`;
+                b.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                b.style.animationDelay = `${Math.random() * 10}s`;
+                b.style.animationDuration = `${10 + Math.random() * 8}s`;
+                container.appendChild(b);
+            }
+        }
+
+        function parseParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode');
+
+            if (mode === 'create') {
+                const pass = prompt("🔒 Enter Admin Passcode:");
+                if (pass === "admin123") {
+                    document.getElementById('adminStudio').classList.remove('hidden');
+                    return;
+                } else {
+                    alert("Incorrect Passcode!");
+                }
+            }
+
+            const name = urlParams.get('name') || "Special One";
+            const sender = urlParams.get('from') || "Chathura";
+            const prefix = urlParams.get('prefix') || "With best wishes ✨";
+            const theme = urlParams.get('theme') || "default";
+            const img = urlParams.get('img') || "";
+
+            if (theme !== "default") {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+
+            const shuffled = [...WISHES_POOL].sort(() => 0.5 - Math.random());
+            selectedWishes = shuffled.slice(0, 5);
+
+            document.getElementById('recipientDisplay').innerText = `Happy Birthday, ${name}! 🎉`;
+            document.getElementById('senderDisplay').innerText = sender;
+            document.getElementById('prefixDisplay').innerText = prefix;
+            document.getElementById('wishText').innerText = selectedWishes[0];
+
+            const avatarBox = document.getElementById('avatarBox');
+            if (img) {
+                avatarBox.innerHTML = `<img src="${img}" class="avatar-img" alt="Recipient">`;
+            } else {
+                const initial = name.charAt(0).toUpperCase();
+                avatarBox.innerHTML = `<div class="avatar-placeholder">${initial}</div>`;
+            }
+
+            document.getElementById('cardWrapper').classList.remove('hidden');
+        }
+
+        function openGift() {
+            const overlay = document.getElementById('unboxingOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.classList.add('hidden'), 800);
+
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            toggleAudio(true);
+        }
+
+        function shuffleWish() {
+            currentWishIdx = (currentWishIdx + 1) % selectedWishes.length;
+            const wishTextEl = document.getElementById('wishText');
+            wishTextEl.style.opacity = '0';
+            
+            setTimeout(() => {
+                wishTextEl.innerText = selectedWishes[currentWishIdx];
+                wishTextEl.style.opacity = '1';
+            }, 200);
+
+            confetti({ particleCount: 35, spread: 50, origin: { y: 0.7 } });
+        }
+
+        function playMelodyNote(note) {
+            if (!audioContext || !note) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            const now = audioContext.currentTime;
+            oscillator.type = 'sine';
+            oscillator.frequency.value = noteFrequencies[note];
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+            oscillator.connect(gain);
+            gain.connect(audioContext.destination);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+        }
+
+        function startMelody() {
+            clearInterval(melodyTimer);
+            melodyStep = 0;
+            melodyTimer = setInterval(() => {
+                playMelodyNote(birthdayMelody[melodyStep][0]);
+                melodyStep = (melodyStep + 1) % birthdayMelody.length;
+            }, 300);
+            playMelodyNote(birthdayMelody[0][0]);
+        }
+
+        async function toggleAudio(forcePlay = false) {
+            const btn = document.getElementById('audioToggle');
+
+            if (!isAudioPlaying || forcePlay) {
+                try {
+                    audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+                    await audioContext.resume();
+                    startMelody();
+                    isAudioPlaying = true;
+                    btn.innerText = '🔊';
+                } catch (error) {
+                    console.error("Unable to start birthday music.", error);
+                }
+            } else {
+                clearInterval(melodyTimer);
+                melodyTimer = null;
+                if (audioContext) await audioContext.suspend();
+                isAudioPlaying = false;
+                btn.innerText = '🎵';
+            }
+        }
+
+        function handleFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImgData = e.target.result;
+                document.getElementById('dropZone').innerText = `Loaded: ${file.name}`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) handleFile(item.getAsFile());
+            }
+        });
+
+        function generateSecureLink() {
+            const name = document.getElementById('cfgName').value.trim() || "Friend";
+            const sender = document.getElementById('cfgSender').value.trim() || "Chathura";
+            const prefix = document.getElementById('cfgPrefix').value;
+            const theme = document.getElementById('cfgTheme').value;
+            const imgUrl = uploadedImgData || document.getElementById('cfgImgUrl').value.trim();
+
+            const baseUrl = window.location.href.split('?')[0];
+            const url = new URL(baseUrl);
+            url.searchParams.set('name', name);
+            url.searchParams.set('from', sender);
+            url.searchParams.set('prefix', prefix);
+            if (theme !== "default") url.searchParams.set('theme', theme);
+            if (imgUrl) url.searchParams.set('img', imgUrl);
+
+            const finalUrlStr = url.toString();
+            document.getElementById('finalUrl').value = finalUrlStr;
+            document.getElementById('outputBox').classList.remove('hidden');
+
+            navigator.clipboard.writeText(finalUrlStr);
+        }
+
+        window.onload = () => {
+            initBalloons();
+            parseParams();
+        };
+    </script>
+</body>
+</html>
